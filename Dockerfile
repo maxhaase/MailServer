@@ -8,10 +8,12 @@ ENV USER_PASSWORD=UserPassword
 ENV MYSQL_ROOT_PASSWORD=rootPassword
 ENV MYSQL_POSTFIX_PASSWORD=postfixPassword
 ENV MYSQL_POSTFIX_DB=postfix
+ENV HOSTNAME=mail.maxhaase.com
 
 RUN apk update && \
-    apk add --no-cache postfix dovecot dovecot-mysql mariadb mariadb-client certbot apache2 php7 php7-apache2 php7-mysqli php7-intl php7-mbstring php7-xml php7-json php7-common php7-curl php7-zip wget unzip openssl bash && \
-    mkdir /run/apache2
+    apk add --no-cache postfix dovecot dovecot-mysql mariadb mariadb-client certbot apache2 php81 php81-fpm php81-apache2 php81-mysqli php81-intl php81-mbstring php81-xml php81-json php81-common php81-curl php81-zip wget unzip openssl bash
+
+
 
 COPY provision_mail_server.sh /usr/local/bin/provision_mail_server.sh
 RUN chmod +x /usr/local/bin/provision_mail_server.sh
