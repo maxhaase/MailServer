@@ -12,11 +12,11 @@
 # Build the Docker Image:
 # docker build -t mail_server_image .
 #
-# Run the Docker Container:
-# docker run -d --name mail_server_container -e DOMAIN1=xsol.es -e DOMAIN2=guanxi.science -e USER=user -e EMAIL=admin@example.com mail_server_image
+# Run the Docker Container with 2 domains:
+# docker run -d --name mail_server_container -e DOMAIN1=maxhaase.com -e DOMAIN2=example.com -e USER=user -e EMAIL=admin@example.com mail_server_image
 #
 # To run without a second domain:
-# docker run -d --name mail_server_container -e DOMAIN1=xsol.es -e USER=user -e EMAIL=admin@example.com mail_server_image
+# docker run -d --name mail_server_container -e DOMAIN1=maxhaase.com -e USER=user -e EMAIL=admin@maxhaase.com mail_server_image
 #
 # Enjoy!
 #
@@ -27,6 +27,7 @@ DOMAIN1=${DOMAIN1}
 DOMAIN2=${DOMAIN2}
 USER=${USER}
 EMAIL=${EMAIL}
+USER_PASSWORD=${USER_PASSWORD}
 MYSQL_ROOT_PASSWORD=${MYSQL_ROOT_PASSWORD}
 MYSQL_POSTFIX_PASSWORD=${MYSQL_POSTFIX_PASSWORD}
 MYSQL_POSTFIX_DB=${MYSQL_POSTFIX_DB}
@@ -36,7 +37,7 @@ VMAIL_USER="vmail"
 VMAIL_UID="5000"
 VMAIL_GID="5000"
 VMAIL_DIR="/var/mail/vhosts"
-PASSWORD_HASH=$(openssl passwd -1 "P@ssw0rd")
+PASSWORD_HASH=$(openssl passwd -1 ${USER_PASSWORD})
 
 # Start MySQL service
 /etc/init.d/mariadb setup
