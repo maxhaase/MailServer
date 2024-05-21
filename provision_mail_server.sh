@@ -38,6 +38,17 @@ VMAIL_UID="5000"
 VMAIL_GID="5000"
 VMAIL_DIR="/var/mail/vhosts"
 PASSWORD_HASH=$(openssl passwd -1 ${USER_PASSWORD})
+HOSTNAME=${HOSTNAME}
+
+# Set the hostname
+echo $HOSTNAME > /etc/hostname
+hostname -F /etc/hostname
+
+# Update /etc/hosts
+cat <<EOF >> /etc/hosts
+127.0.0.1   localhost
+127.0.1.1   $HOSTNAME $HOSTNAME
+EOF
 
 # Start MySQL service
 /etc/init.d/mariadb setup
@@ -96,6 +107,7 @@ $( [ -n "$DOMAIN2" ] && echo "INSERT INTO users (email, password) VALUES ('$USER
 EOF
 
 # Configure Postfix to use MySQL
+postconf -e "myhostname = $HOSTNAME"
 postconf -e "virtual_mailbox_domains = mysql:/etc/postfix/mysql-virtual-mailbox-domains.cf"
 postconf -e "virtual_mailbox_maps = mysql:/etc/postfix/mysql-virtual-mailbox-maps.cf"
 postconf -e "virtual_alias_maps = mysql:/etc/postfix/mysql-virtual-alias-maps.cf"
@@ -198,7 +210,7 @@ sed -i "s/^\(\$config\['smtp_server'\] = \).*/\1'localhost';/" config/config.inc
 
 # Configure Apache
 cat <<EOF > /etc/apache2/httpd.conf
-ServerName localhost
+ServerName $HOSTNAME
 
 LoadModule mpm_prefork_module modules/mod_mpm_prefork.so
 LoadModule dir_module modules/mod_dir.so
@@ -266,3 +278,5 @@ rc-service apache2 start
 certbot --apache -d $DOMAIN1 $( [ -n "$DOMAIN2" ] && echo "-d $DOMAIN2" ) --agree-tos -m $EMAIL --non-interactive
 
 echo "Provisioning completed successfully!"
+
+
