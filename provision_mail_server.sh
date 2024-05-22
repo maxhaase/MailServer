@@ -22,7 +22,14 @@
 #
 # /Max
 ##################################################
-# Define variables
+
+# Check if required environment variables are set, instead of hard-coded!
+if [[ -z "${MYSQL_ROOT_PASSWORD}" || -z "${MYSQL_POSTFIX_PASSWORD}" ]]; then
+  echo "Error: MYSQL_ROOT_PASSWORD and MYSQL_POSTFIX_PASSWORD environment variables must be set."
+  exit 1
+fi
+
+# Define variables, these should already been set in the ENV
 DOMAIN1=${DOMAIN1}
 DOMAIN2=${DOMAIN2}
 USER=${USER}
@@ -278,5 +285,3 @@ rc-service apache2 start
 certbot --apache -d $DOMAIN1 $( [ -n "$DOMAIN2" ] && echo "-d $DOMAIN2" ) --agree-tos -m $EMAIL --non-interactive
 
 echo "Provisioning completed successfully!"
-
-
