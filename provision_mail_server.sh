@@ -6,38 +6,26 @@
 # to get you started and nearly done with the setup of a mail server
 # with a GUI for webmail and another one to administrate the server; there
 # you can add more users, domains and anything you want. 
-# It is meant to get the arguments from the ENV that is declared 
-# in the Dockerfile. 
-#
-# Build the Docker Image:
-# docker build -t mail_server_image .
-#
-# Run the Docker Container with 2 domains:
-# docker run -d --name mail_server_container -e DOMAIN1=maxhaase.com -e DOMAIN2=example.com -e USER=user -e EMAIL=admin@example.com mail_server_image
-#
-# To run without a second domain:
-# docker run -d --name mail_server_container -e DOMAIN1=maxhaase.com -e USER=user -e EMAIL=admin@maxhaase.com mail_server_image
+# It is meant to get the arguments from the ENV 
 #
 # Enjoy!
 #
 # /Max
 ##################################################
-
-# Check if required environment variables are set, instead of hard-coded!
+# Check if required environment variables are set
 if [[ -z "${MYSQL_ROOT_PASSWORD}" || -z "${MYSQL_POSTFIX_PASSWORD}" ]]; then
   echo "Error: MYSQL_ROOT_PASSWORD and MYSQL_POSTFIX_PASSWORD environment variables must be set."
   exit 1
 fi
 
-# Define variables, these should already been set in the ENV
+# Define variables
 DOMAIN1=${DOMAIN1}
 DOMAIN2=${DOMAIN2}
 USER=${USER}
 EMAIL=${EMAIL}
-USER_PASSWORD=${USER_PASSWORD}
 MYSQL_ROOT_PASSWORD=${MYSQL_ROOT_PASSWORD}
 MYSQL_POSTFIX_PASSWORD=${MYSQL_POSTFIX_PASSWORD}
-MYSQL_POSTFIX_DB=${MYSQL_POSTFIX_DB}
+MYSQL_POSTFIX_DB=${MYSQL_POSTFIX_DB:-postfix}
 WEBMAIL_DIR="/var/www/roundcube"
 POSTFIXADMIN_DIR="/var/www/postfixadmin"
 VMAIL_USER="vmail"
@@ -47,17 +35,7 @@ VMAIL_DIR="/var/mail/vhosts"
 PASSWORD_HASH=$(openssl passwd -1 ${USER_PASSWORD})
 HOSTNAME=${HOSTNAME}
 
-# Set the hostname
-echo $HOSTNAME > /etc/hostname
-hostname -F /etc/hostname
-
-# Update /etc/hosts
-cat <<EOF >> /etc/hosts
-127.0.0.1   localhost
-127.0.1.1   $HOSTNAME $HOSTNAME
-EOF
-
-# Start MySQL service
+# Start MariaDB service
 /etc/init.d/mariadb setup
 rc-service mariadb start
 
@@ -184,8 +162,8 @@ ssl_cert = </etc/letsencrypt/live/$DOMAIN1/fullchain.pem
 ssl_key = </etc/letsencrypt/live/$DOMAIN1/privkey.pem
 EOF
 
-# Obtain Let's Encrypt SSL certificates
-certbot certonly --standalone -d $DOMAIN1 $( [ -n "$DOMAIN2" ] && echo "-d $DOMAIN2" ) --agree-tos -m $EMAIL --non-interactive
+# Obtain Let's Encrypt SSL certificates using DNS challenge
+certbot certonly --dns-standalone -d $DOMAIN1 $( [ -n "$DOMAIN2" ] && echo "-d $DOMAIN2" ) --agree-tos -m $EMAIL --non-interactive
 
 # Install and configure postfixadmin
 cd /var/www/
