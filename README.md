@@ -50,7 +50,7 @@ Taking in consideration that the domains exist and the default values are alread
 Notice that you could host the web servers and everything on the same host, but that is not recommended, instead you should use another docker and 
 add it to the orchestration. Use the WordPress code in the project to create 1 or 2 WordPress sites and wrap it all up with Kubernetes.
 
-##########################################
+##########################################<br>
 A Record for mail.example.com:
 Name: mail
 Type: A
@@ -76,14 +76,14 @@ Type: PRT
 Value: For improved security, you should have a reverse lookup record. If you don't have your own DNS server, you might have to ask your host provider to help you. 
 If they refuse, then you can create your DNS server container to get around that.
 
-##########################################
+##########################################<br>
 MX Record for example1.com:
 Name: @
 Type: MX
 Priority: 10 (or any other appropriate value)
 Mail Server: mail.example.com
 
-##########################################
+##########################################<br>
 MX Record for example2.com:
 Name: @
 Type: MX
