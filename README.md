@@ -44,8 +44,8 @@ docker build -t mail_server_image .
 This setup allows the second domain to be optional and reads all variables from environment variables specified in the Dockerfile and command line. 
 The script provisions the mail server according to the specified configuration.
 
-# Examples to Update DNS Records
-Taking in consideration that the domains exist and the default values are already there, this can help you setup what you'll need. 
+# Update DNS Records
+Taking in consideration that the domains exist and the default values are already there, these examples can help you setup what you'll need. 
 Notice that you could host the web servers and everything on the same host, but that is not recommended, instead you should use another docker and 
 add it to the orchestration. Use the WordPress code in the project to create 1 or 2 WordPress sites and wrap it all up with Kubernetes.
 
