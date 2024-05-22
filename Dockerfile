@@ -4,9 +4,6 @@ ENV DOMAIN1=maxhaase.com
 ENV DOMAIN2=
 ENV USER=user
 ENV EMAIL=admin@example.com
-ENV USER_PASSWORD=UserPassword
-ENV MYSQL_ROOT_PASSWORD=rootPassword
-ENV MYSQL_POSTFIX_PASSWORD=postfixPassword
 ENV MYSQL_POSTFIX_DB=postfix
 ENV HOSTNAME=mail.maxhaase.com
 
