@@ -1,7 +1,7 @@
 # MailServer
 Easy automated deployment of a complete mail server in minutes.
 
-Creates a complete mail server with 1 and optionally 2 domains, to get you started and nearly done with the setup of a mail server with a GUI for webmail and another one to administrate the server; there you can add more users, domains and anything you want easily later. <br>
+Creates a complete mail server with 1 and optionally 2 domains, to get you started and nearly done with the setup of a mail server with webmail and a GUI to administrate the server; there you can add more users, domains and anything you want later. <br>
 Make sure you have setup the DNS (A, MX, TXT) records before you deploy it. <br>
 You should even use a PTR record in DNS for reverse look ups and make your service more secure. 
 
