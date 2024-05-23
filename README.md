@@ -52,41 +52,41 @@ Notice that you could host the web servers and everything on the same host, but 
 add it to the orchestration. Use the WordPress code in the project to create 1 or 2 WordPress sites and wrap it all up with Kubernetes.
 
 ##########################################<br>
-A Record for mail.example.com:
-Name: mail
-Type: A
-IP Address: The public IP address of your mail server
+A Record for mail.example.com:<br>
+Name: mail<br>
+Type: A<br>
+IP Address: The public IP address of your mail server<br><br>
 
-MX: @ 10 mail.example.com
-A: mail The public IP address of your mail server
+MX: @ 10 mail.example.com<br>
+A: mail The public IP address of your mail server<br>
 
-Name: email
-Type: CNAME
-Value: mail.example.com.
+Name: email<br>
+Type: CNAME<br>
+Value: mail.example.com.<br>
 
-Name: TXT
-Type: @
-Value: v=spf1 a mx ip4:The public IP address of your mail server ~all
+Name: TXT<br>
+Type: @<br>
+Value: v=spf1 a mx ip4:The public IP address of your mail server ~all<br>
 
-Name: TXT
-Type: @	
-Value: mail._domainkey IN TXT ( "v=DKIM1; h=rsa-sha256; k=rsa; s=email; " "p=THE PUBLIC KEY OF YOUR MAIL SERVER" ) ; ----- DKIM key mail for mail.example.com
+Name: TXT<br>
+Type: @	<br>
+Value: mail._domainkey IN TXT ( "v=DKIM1; h=rsa-sha256; k=rsa; s=email; " "p=THE PUBLIC KEY OF YOUR MAIL SERVER" ) ; ----- DKIM key mail for mail.example.com<br>
 
-Name: TXT
-Type: PRT
-Value: For improved security, you should have a reverse lookup record. If you don't have your own DNS server, you might have to ask your host provider to help you. 
+Name: TXT<br>
+Type: PRT<br>
+Value: For improved security, you should have a reverse lookup record. If you don't have your own DNS server, you might have to ask your host provider to help you. <br>
 If they refuse, then you can create your DNS server container to get around that.
 
 ##########################################<br>
-MX Record for example1.com:
-Name: @
-Type: MX
-Priority: 10 (or any other appropriate value)
-Mail Server: mail.example.com
+MX Record for example1.com:<br>
+Name: @<br>
+Type: MX<br>
+Priority: 10 (or any other appropriate value)<br>
+Mail Server: mail.example.com<br>
 
 ##########################################<br>
-MX Record for example2.com:
-Name: @
-Type: MX
-Priority: 10 (or any other appropriate value)
-Mail Server: mail.example.com
+MX Record for example2.com:<br>
+Name: @<br>
+Type: MX<br>
+Priority: 10 (or any other appropriate value)<br>
+Mail Server: mail.example.com<br>
