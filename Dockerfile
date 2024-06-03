@@ -1,32 +1,104 @@
-FROM alpine:latest
+version: '3.7'
 
-# Environment variables
-ENV DOMAIN1=example1.com
-ENV DOMAIN2=example2.com
-ENV USER=user
-ENV EMAIL=user@example.com
-ENV MYSQL_POSTFIX_DB=postfix
-ENV HOSTNAME=mail.example.com
+services:
+  db:
+    image: mariadb:10.5
+    volumes:
+      - db_data:/var/lib/mysql
+    env_file:
+      - .env
+    environment:
+      MYSQL_ROOT_PASSWORD: \${MYSQL_ROOT_PASSWORD}
+      MYSQL_DATABASE: \${MYSQL_DATABASE}
+      MYSQL_USER: \${MYSQL_USER}
+      MYSQL_PASSWORD: \${MYSQL_PASSWORD}
+    ports:
+      - "3306:3306"
 
-# Install necessary packages
-RUN apk update && \
-    apk add --no-cache postfix dovecot dovecot-mysql mariadb mariadb-client certbot apache2 php81 php81-fpm php81-apache2 php81-mysqli php81-intl php81-mbstring php81-xml php81-json php81-common php81-curl php81-zip wget unzip openssl bash
+  postfix:
+    image: boky/postfix
+    env_file:
+      - .env
+    environment:
+      MYSQL_ROOT_PASSWORD: \${MYSQL_ROOT_PASSWORD}
+      MYSQL_DATABASE: \${MYSQL_DATABASE}
+      MYSQL_USER: \${MYSQL_USER}
+      MYSQL_PASSWORD: \${MYSQL_PASSWORD}
+    ports:
+      - "25:25"
+      - "587:587"
 
-# Expose ports
-EXPOSE 25 80 443 587 993 995
+  dovecot:
+    image: tvial/docker-mailserver:latest
+    env_file:
+      - .env
+    environment:
+      MYSQL_ROOT_PASSWORD: \${MYSQL_ROOT_PASSWORD}
+      MYSQL_DATABASE: \${MYSQL_DATABASE}
+      MYSQL_USER: \${MYSQL_USER}
+      MYSQL_PASSWORD: \${MYSQL_PASSWORD}
+    ports:
+      - "993:993"
+      - "995:995"
 
-# Create a persistent storage volume
-VOLUME /var/mail
+  postfixadmin:
+    image: postfixadmin
+    volumes:
+      - postfixadmin_data:/data
+    env_file:
+      - .env
+    environment:
+      POSTFIXADMIN_SETUP_PASSWORD: \${POSTFIXADMIN_SETUP_PASSWORD}
+      MYSQL_ROOT_PASSWORD: \${MYSQL_ROOT_PASSWORD}
+      MYSQL_DATABASE: \${MYSQL_DATABASE}
+      MYSQL_USER: \${MYSQL_USER}
+      MYSQL_PASSWORD: \${MYSQL_PASSWORD}
+    ports:
+      - "8081:80"
 
-# Copy the secrets file
-COPY secrets.env /root/secrets.env
+  roundcube:
+    image: roundcube/roundcubemail
+    env_file:
+      - .env
+    environment:
+      MYSQL_ROOT_PASSWORD: \${MYSQL_ROOT_PASSWORD}
+      MYSQL_DATABASE: \${MYSQL_DATABASE}
+      MYSQL_USER: \${MYSQL_USER}
+      MYSQL_PASSWORD: \${MYSQL_PASSWORD}
+    ports:
+      - "8080:80"
 
-# Source the secrets file
-RUN set -a && source /root/secrets.env && set +a
+  wordpress_domain1:
+    image: wordpress:latest
+    volumes:
+      - wordpress_domain1_data:/var/www/html
+    env_file:
+      - .env
+    environment:
+      WORDPRESS_DB_HOST: db
+      WORDPRESS_DB_USER: \${WORDPRESS_DB_USER}
+      WORDPRESS_DB_PASSWORD: \${WORDPRESS_DB_PASSWORD}
+      WORDPRESS_DB_NAME: \${MYSQL_DATABASE}
+    ports:
+      - "8001:80"
 
-# Copy provisioning script and make it executable
-COPY provision_mail_server.sh /usr/local/bin/provision_mail_server.sh
-RUN chmod +x /usr/local/bin/provision_mail_server.sh
+  wordpress_domain2:
+    image: wordpress:latest
+    volumes:
+      - wordpress_domain2_data:/var/www/html
+    env_file:
+      - .env
+    environment:
+      WORDPRESS_DB_HOST: db
+      WORDPRESS_DB_USER: \${WORDPRESS_DB_USER}
+      WORDPRESS_DB_PASSWORD: \${WORDPRESS_DB_PASSWORD}
+      WORDPRESS_DB_NAME: \${MYSQL_DATABASE}
+    ports:
+      - "8002:80"
 
-# Run the provisioning script
-CMD ["/usr/local/bin/provision_mail_server.sh"]
+volumes:
+  db_data:
+  postfixadmin_data:
+  wordpress_domain1_data:
+  wordpress_domain2_data:
+
