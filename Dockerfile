@@ -1,18 +1,17 @@
 FROM ubuntu:latest
 
-# Arguments for MySQL configuration
+# Arguments and environment variables
 ARG MYSQL_ROOT_PASSWORD
 ARG MYSQL_DATABASE
 ARG MYSQL_USER
 ARG MYSQL_PASSWORD
 
-# Environment variables for MySQL
 ENV MYSQL_ROOT_PASSWORD=${MYSQL_ROOT_PASSWORD}
 ENV MYSQL_DATABASE=${MYSQL_DATABASE}
 ENV MYSQL_USER=${MYSQL_USER}
 ENV MYSQL_PASSWORD=${MYSQL_PASSWORD}
 
-# Update package list and install necessary packages
+# Update and install necessary packages
 RUN apt-get update && apt-get install -y \
     apache2 \
     libapache2-mod-php \
@@ -27,17 +26,15 @@ RUN apt-get update && apt-get install -y \
     certbot python3-certbot-apache \
     bash
 
-# Copy configuration files
-COPY apache-config/ /etc/apache2/sites-available/
-COPY postfix-config/ /etc/postfix/
-COPY dovecot-config/ /etc/dovecot/
-COPY init.sh /init.sh
-COPY start-services.sh /start-services.sh
+# Copy configuration scripts
+COPY apache-config.sh /usr/local/bin/apache-config.sh
+COPY init.sh /usr/local/bin/init.sh
 
-# Make init script executable
-RUN chmod +x /init.sh /start-services.sh
+# Make scripts executable
+RUN chmod +x /usr/local/bin/apache-config.sh /usr/local/bin/init.sh
 
-# Expose ports
+# Expose necessary ports
 EXPOSE 80 443 25 587 993 995
 
-CMD ["/start-services.sh"]
+# Start supervisor to manage services
+CMD ["/usr/bin/supervisord", "-c", "/etc/supervisor/supervisord.conf"]
