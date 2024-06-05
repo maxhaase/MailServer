@@ -1,0 +1,122 @@
+version: '3.8'
+
+services:
+  db:
+    image: mariadb:10.5
+    container_name: mailserver_db
+    volumes:
+      - db_data:/var/lib/mysql
+    environment:
+      MYSQL_ROOT_PASSWORD: \${MYSQL_ROOT_PASSWORD}
+      MYSQL_DATABASE: \${MYSQL_DATABASE}
+      MYSQL_USER: \${MYSQL_USER}
+      MYSQL_PASSWORD: \${MYSQL_PASSWORD}
+    networks:
+      - mail_network
+
+  postfix:
+    image: boky/postfix
+    container_name: mailserver_postfix
+    ports:
+      - "25:25"
+      - "587:587"
+    environment:
+      DBHOST: db
+      DBUSER: \${MYSQL_USER}
+      DBPASS: \${MYSQL_PASSWORD}
+      DBNAME: \${MYSQL_DATABASE}
+    depends_on:
+      - db
+    networks:
+      - mail_network
+
+  dovecot:
+    image: tvial/docker-mailserver:latest
+    container_name: mailserver_dovecot
+    volumes:
+      - maildata:/var/mail
+      - mailstate:/var/mail-state
+    environment:
+      DBHOST: db
+      DBUSER: \${MYSQL_USER}
+      DBPASS: \${MYSQL_PASSWORD}
+      DBNAME: \${MYSQL_DATABASE}
+    depends_on:
+      - db
+    networks:
+      - mail_network
+
+  postfixadmin:
+    image: postfixadmin
+    container_name: mailserver_postfixadmin
+    ports:
+      - "8081:80"
+    environment:
+      SETUP_PASSWORD: \${POSTFIXADMIN_SETUP_PASSWORD}
+      DBHOST: db
+      DBUSER: \${MYSQL_USER}
+      DBPASS: \${MYSQL_PASSWORD}
+      DBNAME: \${MYSQL_DATABASE}
+    depends_on:
+      - db
+    networks:
+      - mail_network
+
+  roundcube:
+    image: roundcube/roundcubemail:latest
+    container_name: mailserver_roundcube
+    ports:
+      - "8080:80"
+    environment:
+      ROUNDCUBE_DB_HOST: db
+      ROUNDCUBE_DB_USER: \${ROUNDCUBEMAIL_DB_USER}
+      ROUNDCUBE_DB_PASSWORD: \${ROUNDCUBEMAIL_DB_PASSWORD}
+      ROUNDCUBE_DB_NAME: \${MYSQL_DATABASE}
+    depends_on:
+      - db
+    networks:
+      - mail_network
+
+  wordpress_domain1:
+    image: wordpress:latest
+    container_name: wordpress_domain1
+    volumes:
+      - wordpress_domain1_data:/var/www/html
+    environment:
+      WORDPRESS_DB_HOST: db
+      WORDPRESS_DB_USER: \${WORDPRESS_DB_USER}
+      WORDPRESS_DB_PASSWORD: \${WORDPRESS_DB_PASSWORD}
+      WORDPRESS_DB_NAME: \${MYSQL_DATABASE}
+    ports:
+      - "8001:80"
+    depends_on:
+      - db
+    networks:
+      - mail_network
+
+  wordpress_domain2:
+    image: wordpress:latest
+    container_name: wordpress_domain2
+    volumes:
+      - wordpress_domain2_data:/var/www/html
+    environment:
+      WORDPRESS_DB_HOST: db
+      WORDPRESS_DB_USER: \${WORDPRESS_DB_USER}
+      WORDPRESS_DB_PASSWORD: \${WORDPRESS_DB_PASSWORD}
+      WORDPRESS_DB_NAME: \${MYSQL_DATABASE}
+    ports:
+      - "8002:80"
+    depends_on:
+      - db
+    networks:
+      - mail_network
+
+volumes:
+  db_data:
+  maildata:
+  mailstate:
+  wordpress_domain1_data:
+  wordpress_domain2_data:
+
+networks:
+  mail_network:
