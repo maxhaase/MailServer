@@ -1,104 +1,49 @@
-version: '3.7'
+FROM alpine:latest
 
-services:
-  db:
-    image: mariadb:10.5
-    volumes:
-      - db_data:/var/lib/mysql
-    env_file:
-      - .env
-    environment:
-      MYSQL_ROOT_PASSWORD: \${MYSQL_ROOT_PASSWORD}
-      MYSQL_DATABASE: \${MYSQL_DATABASE}
-      MYSQL_USER: \${MYSQL_USER}
-      MYSQL_PASSWORD: \${MYSQL_PASSWORD}
-    ports:
-      - "3306:3306"
+# Install necessary packages
+RUN apk update && apk add --no-cache \
+    apache2 \
+    apache2-ssl \
+    apache2-proxy \
+    apache2-proxy-html \
+    apache2-proxy-http \
+    apache2-ssl \
+    mariadb mariadb-client \
+    postfix \
+    dovecot \
+    postfixadmin \
+    roundcubemail \
+    wordpress \
+    php7 php7-mysqli php7-apache2 php7-json php7-session php7-openssl \
+    certbot \
+    supervisor \
+    bash
 
-  postfix:
-    image: boky/postfix
-    env_file:
-      - .env
-    environment:
-      MYSQL_ROOT_PASSWORD: \${MYSQL_ROOT_PASSWORD}
-      MYSQL_DATABASE: \${MYSQL_DATABASE}
-      MYSQL_USER: \${MYSQL_USER}
-      MYSQL_PASSWORD: \${MYSQL_PASSWORD}
-    ports:
-      - "25:25"
-      - "587:587"
+# Configure Apache
+RUN mkdir -p /run/apache2 && \
+    sed -i 's/^#LoadModule/LoadModule/' /etc/apache2/httpd.conf && \
+    echo "Include /etc/apache2/sites-enabled/*.conf" >> /etc/apache2/httpd.conf
 
-  dovecot:
-    image: tvial/docker-mailserver:latest
-    env_file:
-      - .env
-    environment:
-      MYSQL_ROOT_PASSWORD: \${MYSQL_ROOT_PASSWORD}
-      MYSQL_DATABASE: \${MYSQL_DATABASE}
-      MYSQL_USER: \${MYSQL_USER}
-      MYSQL_PASSWORD: \${MYSQL_PASSWORD}
-    ports:
-      - "993:993"
-      - "995:995"
+# Configure MySQL
+RUN mysql_install_db --user=mysql --datadir=/var/lib/mysql
 
-  postfixadmin:
-    image: postfixadmin
-    volumes:
-      - postfixadmin_data:/data
-    env_file:
-      - .env
-    environment:
-      POSTFIXADMIN_SETUP_PASSWORD: \${POSTFIXADMIN_SETUP_PASSWORD}
-      MYSQL_ROOT_PASSWORD: \${MYSQL_ROOT_PASSWORD}
-      MYSQL_DATABASE: \${MYSQL_DATABASE}
-      MYSQL_USER: \${MYSQL_USER}
-      MYSQL_PASSWORD: \${MYSQL_PASSWORD}
-    ports:
-      - "8081:80"
+# Configure Postfix
+COPY postfix/main.cf /etc/postfix/main.cf
 
-  roundcube:
-    image: roundcube/roundcubemail
-    env_file:
-      - .env
-    environment:
-      MYSQL_ROOT_PASSWORD: \${MYSQL_ROOT_PASSWORD}
-      MYSQL_DATABASE: \${MYSQL_DATABASE}
-      MYSQL_USER: \${MYSQL_USER}
-      MYSQL_PASSWORD: \${MYSQL_PASSWORD}
-    ports:
-      - "8080:80"
+# Configure Dovecot
+COPY dovecot/dovecot.conf /etc/dovecot/dovecot.conf
 
-  wordpress_domain1:
-    image: wordpress:latest
-    volumes:
-      - wordpress_domain1_data:/var/www/html
-    env_file:
-      - .env
-    environment:
-      WORDPRESS_DB_HOST: db
-      WORDPRESS_DB_USER: \${WORDPRESS_DB_USER}
-      WORDPRESS_DB_PASSWORD: \${WORDPRESS_DB_PASSWORD}
-      WORDPRESS_DB_NAME: \${MYSQL_DATABASE}
-    ports:
-      - "8001:80"
+# Configure Supervisord
+COPY supervisord.conf /etc/supervisord.conf
 
-  wordpress_domain2:
-    image: wordpress:latest
-    volumes:
-      - wordpress_domain2_data:/var/www/html
-    env_file:
-      - .env
-    environment:
-      WORDPRESS_DB_HOST: db
-      WORDPRESS_DB_USER: \${WORDPRESS_DB_USER}
-      WORDPRESS_DB_PASSWORD: \${WORDPRESS_DB_PASSWORD}
-      WORDPRESS_DB_NAME: \${MYSQL_DATABASE}
-    ports:
-      - "8002:80"
+# Configure services and databases
+COPY init.sh /init.sh
+RUN chmod +x /init.sh
 
-volumes:
-  db_data:
-  postfixadmin_data:
-  wordpress_domain1_data:
-  wordpress_domain2_data:
+# Volumes
+VOLUME ["/var/www/html", "/var/lib/mysql", "/var/mail", "/etc/letsencrypt"]
 
+# Ports
+EXPOSE 80 443 25 110 143 587 993 995
+
+CMD ["/usr/bin/supervisord", "-c", "/etc/supervisord.conf"]
