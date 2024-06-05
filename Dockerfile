@@ -38,7 +38,7 @@ COPY init.sh /init.sh
 RUN chmod +x /init.sh
 
 # Expose ports
-EXPOSE 80 443 3306
+EXPOSE 80 443 3306 25 587 993 995
 
 # Start supervisor to manage all services
-CMD ["/usr/bin/supervisord"]
+CMD ["/init.sh"]
