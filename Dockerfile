@@ -25,11 +25,8 @@ RUN apt-get update && apt-get install -y \
     bash
 
 COPY apache-config/ /etc/apache2/sites-available/
-COPY init.sh /usr/local/bin/init.sh
-COPY supervisor/supervisord.conf /etc/supervisor/conf.d/supervisord.conf
+COPY init.sh /init.sh
 
-RUN chmod +x /usr/local/bin/init.sh
+RUN chmod +x /init.sh
 
-EXPOSE 80 443 25 587 993 995
-
-CMD ["/usr/local/bin/init.sh"]
+CMD ["/init.sh"]
