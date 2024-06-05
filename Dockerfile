@@ -1,18 +1,22 @@
-# Use the official Ubuntu image
 FROM ubuntu:latest
 
-# Environment variables
+# Arguments
 ARG MYSQL_ROOT_PASSWORD
 ARG MYSQL_DATABASE
 ARG MYSQL_USER
 ARG MYSQL_PASSWORD
 
-# Install necessary packages
+# Environment variables
+ENV MYSQL_ROOT_PASSWORD=${MYSQL_ROOT_PASSWORD}
+ENV MYSQL_DATABASE=${MYSQL_DATABASE}
+ENV MYSQL_USER=${MYSQL_USER}
+ENV MYSQL_PASSWORD=${MYSQL_PASSWORD}
+
+# Install required packages
 RUN apt-get update && apt-get install -y \
     apache2 \
     libapache2-mod-php \
-    mariadb-server \
-    mariadb-client \
+    mariadb-server mariadb-client \
     postfix \
     dovecot-core dovecot-imapd dovecot-pop3d dovecot-mysql \
     php php-mysql php-cli php-curl php-json php-gd php-mbstring php-xml \
@@ -20,24 +24,21 @@ RUN apt-get update && apt-get install -y \
     roundcube-core roundcube-mysql \
     wordpress \
     supervisor \
-    certbot \
-    python3-certbot-apache \
+    certbot python3-certbot-apache \
     bash
 
-# Copy configurations and scripts
+# Copy Apache configuration files
+COPY apache-config/ /etc/apache2/sites-available/
+
+# Copy supervisor configuration file
+COPY supervisord.conf /etc/supervisor/conf.d/supervisord.conf
+
+# Copy entrypoint script
 COPY init.sh /init.sh
-COPY apache-config.sh /apache-config.sh
-RUN chmod +x /init.sh /apache-config.sh
+RUN chmod +x /init.sh
 
-# Configure Apache
-RUN mkdir -p /run/apache2 && \
-    echo "IncludeOptional /etc/apache2/sites-available/*.conf" >> /etc/apache2/apache2.conf
+# Expose ports
+EXPOSE 80 443 3306
 
-# Expose necessary ports
-EXPOSE 80 443 25 587 993
-
-# Volumes
-VOLUME ["/var/lib/mysql", "/var/www/html", "/var/mail", "/etc/letsencrypt"]
-
-# Start supervisord
-CMD ["/usr/bin/supervisord", "-c", "/etc/supervisord.conf"]
+# Start supervisor to manage all services
+CMD ["/usr/bin/supervisord"]
