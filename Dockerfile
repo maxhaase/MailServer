@@ -1,49 +1,46 @@
+# Use the official Alpine image
 FROM alpine:latest
+
+# Environment variables
+ARG MYSQL_ROOT_PASSWORD
+ARG MYSQL_DATABASE
+ARG MYSQL_USER
+ARG MYSQL_PASSWORD
 
 # Install necessary packages
 RUN apk update && apk add --no-cache \
     apache2 \
     apache2-ssl \
     apache2-proxy \
-    apache2-proxy-html \
-    apache2-proxy-http \
-    apache2-ssl \
     mariadb mariadb-client \
     postfix \
     dovecot \
+    php7 php7-mysqli php7-session php7-openssl php7-json php7-phar php7-curl php7-xml \
+    php7-mbstring php7-gd php7-ctype php7-dom \
     postfixadmin \
     roundcubemail \
     wordpress \
-    php7 php7-mysqli php7-apache2 php7-json php7-session php7-openssl \
-    certbot \
     supervisor \
+    certbot \
     bash
 
-# Configure Apache
-RUN mkdir -p /run/apache2 && \
-    sed -i 's/^#LoadModule/LoadModule/' /etc/apache2/httpd.conf && \
-    echo "Include /etc/apache2/sites-enabled/*.conf" >> /etc/apache2/httpd.conf
-
-# Configure MySQL
-RUN mysql_install_db --user=mysql --datadir=/var/lib/mysql
-
-# Configure Postfix
-COPY postfix/main.cf /etc/postfix/main.cf
-
-# Configure Dovecot
-COPY dovecot/dovecot.conf /etc/dovecot/dovecot.conf
-
-# Configure Supervisord
+# Copy configurations
+COPY apache-config/ /etc/apache2/sites-available/
+COPY postfix-config/ /etc/postfix/
+COPY dovecot-config/ /etc/dovecot/
 COPY supervisord.conf /etc/supervisord.conf
-
-# Configure services and databases
 COPY init.sh /init.sh
 RUN chmod +x /init.sh
 
+# Configure Apache
+RUN mkdir -p /run/apache2 && \
+    echo "IncludeOptional /etc/apache2/sites-available/*.conf" >> /etc/apache2/httpd.conf
+
+# Expose necessary ports
+EXPOSE 80 443 25 587 993
+
 # Volumes
-VOLUME ["/var/www/html", "/var/lib/mysql", "/var/mail", "/etc/letsencrypt"]
+VOLUME ["/var/lib/mysql", "/var/www/html", "/var/mail", "/etc/letsencrypt"]
 
-# Ports
-EXPOSE 80 443 25 110 143 587 993 995
-
+# Start supervisord
 CMD ["/usr/bin/supervisord", "-c", "/etc/supervisord.conf"]
