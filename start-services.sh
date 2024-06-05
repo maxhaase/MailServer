@@ -13,7 +13,7 @@ FLUSH PRIVILEGES;
 EOF
 
 # Configure Apache
-a2ensite mail.conf admin.conf webmail.conf example1.conf example2.conf
+a2ensite mail.example1.com.conf admin.example1.com.conf webmail.example1.com.conf DOMAIN1.conf DOMAIN2.conf
 a2enmod proxy proxy_http ssl
 
 # Start services
