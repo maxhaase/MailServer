@@ -19,22 +19,8 @@ mysql -u root -p${MYSQL_ROOT_PASSWORD} -e "GRANT ALL PRIVILEGES ON wordpress_db1
 mysql -u root -p${MYSQL_ROOT_PASSWORD} -e "GRANT ALL PRIVILEGES ON wordpress_db2.* TO '${MYSQL_USER}'@'%';"
 mysql -u root -p${MYSQL_ROOT_PASSWORD} -e "FLUSH PRIVILEGES;"
 
-# Setup PostfixAdmin
-php /var/www/html/postfixadmin/public/setup.php
-
-# Setup Roundcube
-php /var/www/html/roundcubemail/bin/initdb.sh --dir=/var/www/html/roundcubemail/SQL --create
-php /var/www/html/roundcubemail/bin/update.sh --dir=/var/www/html/roundcubemail/SQL
-
-# Setup WordPress
-php /var/www/html/wordpress/wp-admin/install.php
-
-# Enable Apache sites
-a2ensite \${MAIL_DOMAIN}.conf
-a2ensite \${ADMIN_DOMAIN}.conf
-a2ensite \${DOMAIN1}.conf
-a2ensite \${DOMAIN2}.conf
-a2ensite \${WEBMAIL_DOMAIN}.conf
+# Run Apache configuration script
+bash /apache-config.sh
 
 # Reload Apache to apply configurations
 systemctl reload apache2
