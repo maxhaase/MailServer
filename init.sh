@@ -3,24 +3,27 @@
 # Start MySQL service
 service mysql start
 
-# Configure MySQL database and users
-mysql -u root -p${MYSQL_ROOT_PASSWORD} -e "CREATE DATABASE IF NOT EXISTS ${MYSQL_DATABASE};"
-mysql -u root -p${MYSQL_ROOT_PASSWORD} -e "CREATE USER IF NOT EXISTS '${MYSQL_USER}'@'%' IDENTIFIED BY '${MYSQL_PASSWORD}';"
-mysql -u root -p${MYSQL_ROOT_PASSWORD} -e "GRANT ALL PRIVILEGES ON ${MYSQL_DATABASE}.* TO '${MYSQL_USER}'@'%';"
-mysql -u root -p${MYSQL_ROOT_PASSWORD} -e "FLUSH PRIVILEGES;"
+# Configure MySQL
+mysql -u root -p$MYSQL_ROOT_PASSWORD <<EOF
+CREATE DATABASE IF NOT EXISTS ${MYSQL_DATABASE};
+CREATE USER IF NOT EXISTS '${MYSQL_USER}'@'%' IDENTIFIED BY '${MYSQL_PASSWORD}';
+GRANT ALL PRIVILEGES ON *.* TO '${MYSQL_USER}'@'%';
+FLUSH PRIVILEGES;
+EOF
 
-# Setup WordPress databases
-mysql -u root -p${MYSQL_ROOT_PASSWORD} -e "CREATE DATABASE IF NOT EXISTS wordpress_db1;"
-mysql -u root -p${MYSQL_ROOT_PASSWORD} -e "CREATE DATABASE IF NOT EXISTS wordpress_db2;"
-mysql -u root -p${MYSQL_ROOT_PASSWORD} -e "GRANT ALL PRIVILEGES ON wordpress_db1.* TO '${MYSQL_USER}'@'%';"
-mysql -u root -p${MYSQL_ROOT_PASSWORD} -e "GRANT ALL PRIVILEGES ON wordpress_db2.* TO '${MYSQL_USER}'@'%';"
-mysql -u root -p${MYSQL_ROOT_PASSWORD} -e "FLUSH PRIVILEGES;"
+# Enable Apache modules and sites
+a2enmod proxy proxy_http ssl
+a2ensite admin.${DOMAIN1}.conf webmail.${DOMAIN1}.conf ${DOMAIN1}.conf ${DOMAIN2}.conf
+a2enconf roundcube postfixadmin
 
-# Run Apache configuration script
-bash /apache-config.sh
+# Enable and start services
+service apache2 start
+service postfix start
+service dovecot start
+service supervisor start
 
-# Reload Apache to apply configurations
-systemctl reload apache2
+# Obtain SSL certificates
+certbot --apache -d ${DOMAIN1} -d ${DOMAIN2} -d admin.${DOMAIN1} -d webmail.${DOMAIN1}
 
-# Start all services
-supervisord -c /etc/supervisord.conf
+# Keep container running
+tail -f /var/log/apache2/access.log
