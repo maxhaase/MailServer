@@ -1,10 +1,7 @@
 #!/bin/bash
 
 # Start MySQL service
-/usr/bin/mysqld_safe --datadir='/var/lib/mysql' &
-
-# Wait for MySQL to start
-sleep 10
+service mysql start
 
 # Configure MySQL database and users
 mysql -u root -p${MYSQL_ROOT_PASSWORD} -e "CREATE DATABASE IF NOT EXISTS ${MYSQL_DATABASE};"
