@@ -30,6 +30,6 @@ COPY supervisor/supervisord.conf /etc/supervisor/conf.d/supervisord.conf
 
 RUN chmod +x /usr/local/bin/init.sh
 
-EXPOSE 80 443 3306
+EXPOSE 80 443 25 587 993 995
 
 CMD ["/usr/local/bin/init.sh"]
