@@ -29,5 +29,15 @@ php /var/www/html/roundcubemail/bin/update.sh --dir=/var/www/html/roundcubemail/
 # Setup WordPress
 php /var/www/html/wordpress/wp-admin/install.php
 
+# Enable Apache sites
+a2ensite \${MAIL_DOMAIN}.conf
+a2ensite \${ADMIN_DOMAIN}.conf
+a2ensite \${DOMAIN1}.conf
+a2ensite \${DOMAIN2}.conf
+a2ensite \${WEBMAIL_DOMAIN}.conf
+
+# Reload Apache to apply configurations
+systemctl reload apache2
+
 # Start all services
 supervisord -c /etc/supervisord.conf
