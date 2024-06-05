@@ -1,32 +1,8 @@
-version: '3.7'
+version: '3.8'
 
 services:
-  web:
-    build: .
-    container_name: web
-    ports:
-      - "80:80"
-      - "443:443"
-      - "25:25"
-      - "587:587"
-      - "993:993"
-      - "995:995"
-    volumes:
-      - ./apache-config:/etc/apache2/sites-available
-    environment:
-      - MYSQL_ROOT_PASSWORD=${MYSQL_ROOT_PASSWORD}
-      - MYSQL_DATABASE=${MYSQL_DATABASE}
-      - MYSQL_USER=${MYSQL_USER}
-      - MYSQL_PASSWORD=${MYSQL_PASSWORD}
-    networks:
-      - webnet
-    depends_on:
-      - db
-
   db:
     image: mariadb:latest
-    container_name: mariadb
-    restart: always
     environment:
       MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD}
       MYSQL_DATABASE: ${MYSQL_DATABASE}
@@ -34,11 +10,29 @@ services:
       MYSQL_PASSWORD: ${MYSQL_PASSWORD}
     volumes:
       - db_data:/var/lib/mysql
-    networks:
-      - webnet
+    ports:
+      - "3306:3306"
+
+  web:
+    build: .
+    depends_on:
+      - db
+    ports:
+      - "80:80"
+      - "443:443"
+      - "25:25"
+      - "587:587"
+      - "993:993"
+      - "995:995"
+    environment:
+      DOMAIN1: ${DOMAIN1}
+      DOMAIN2: ${DOMAIN2}
+      MAIL_DOMAIN: ${MAIL_DOMAIN}
+      ADMIN_DOMAIN: ${ADMIN_DOMAIN}
+      WEBMAIL_DOMAIN: ${WEBMAIL_DOMAIN}
+    volumes:
+      - web_data:/var/www/html
 
 volumes:
   db_data:
-
-networks:
-  webnet:
+  web_data:
