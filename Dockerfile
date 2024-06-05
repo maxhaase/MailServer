@@ -1,18 +1,15 @@
 FROM ubuntu:latest
 
-# Arguments
 ARG MYSQL_ROOT_PASSWORD
 ARG MYSQL_DATABASE
 ARG MYSQL_USER
 ARG MYSQL_PASSWORD
 
-# Environment variables
 ENV MYSQL_ROOT_PASSWORD=${MYSQL_ROOT_PASSWORD}
 ENV MYSQL_DATABASE=${MYSQL_DATABASE}
 ENV MYSQL_USER=${MYSQL_USER}
 ENV MYSQL_PASSWORD=${MYSQL_PASSWORD}
 
-# Install required packages
 RUN apt-get update && apt-get install -y \
     apache2 \
     libapache2-mod-php \
@@ -27,18 +24,12 @@ RUN apt-get update && apt-get install -y \
     certbot python3-certbot-apache \
     bash
 
-# Copy Apache configuration files
 COPY apache-config/ /etc/apache2/sites-available/
+COPY init.sh /usr/local/bin/init.sh
+COPY supervisor/supervisord.conf /etc/supervisor/conf.d/supervisord.conf
 
-# Copy supervisor configuration file
-COPY supervisord.conf /etc/supervisor/conf.d/supervisord.conf
+RUN chmod +x /usr/local/bin/init.sh
 
-# Copy entrypoint script
-COPY init.sh /init.sh
-RUN chmod +x /init.sh
+EXPOSE 80 443 3306
 
-# Expose ports
-EXPOSE 80 443 3306 25 587 993 995
-
-# Start supervisor to manage all services
-CMD ["/init.sh"]
+CMD ["/usr/local/bin/init.sh"]
