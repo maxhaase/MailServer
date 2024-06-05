@@ -1,5 +1,5 @@
-# Use the official Alpine image
-FROM alpine:latest
+# Use the official Ubuntu image
+FROM ubuntu:latest
 
 # Environment variables
 ARG MYSQL_ROOT_PASSWORD
@@ -8,20 +8,20 @@ ARG MYSQL_USER
 ARG MYSQL_PASSWORD
 
 # Install necessary packages
-RUN apk update && apk add --no-cache \
+RUN apt-get update && apt-get install -y \
     apache2 \
-    apache2-ssl \
-    apache2-proxy \
-    mariadb mariadb-client \
+    libapache2-mod-php \
+    mariadb-server \
+    mariadb-client \
     postfix \
-    dovecot \
-    php7 php7-mysqli php7-session php7-openssl php7-json php7-phar php7-curl php7-xml \
-    php7-mbstring php7-gd php7-ctype php7-dom \
+    dovecot-core dovecot-imapd dovecot-pop3d dovecot-mysql \
+    php php-mysql php-cli php-curl php-json php-gd php-mbstring php-xml \
     postfixadmin \
-    roundcubemail \
+    roundcube-core roundcube-mysql \
     wordpress \
     supervisor \
     certbot \
+    python3-certbot-apache \
     bash
 
 # Copy configurations and scripts
@@ -31,7 +31,7 @@ RUN chmod +x /init.sh /apache-config.sh
 
 # Configure Apache
 RUN mkdir -p /run/apache2 && \
-    echo "IncludeOptional /etc/apache2/sites-available/*.conf" >> /etc/apache2/httpd.conf
+    echo "IncludeOptional /etc/apache2/sites-available/*.conf" >> /etc/apache2/apache2.conf
 
 # Expose necessary ports
 EXPOSE 80 443 25 587 993
