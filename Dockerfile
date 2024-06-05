@@ -24,13 +24,10 @@ RUN apk update && apk add --no-cache \
     certbot \
     bash
 
-# Copy configurations
-COPY apache-config/ /etc/apache2/sites-available/
-COPY postfix-config/ /etc/postfix/
-COPY dovecot-config/ /etc/dovecot/
-COPY supervisord.conf /etc/supervisord.conf
+# Copy configurations and scripts
 COPY init.sh /init.sh
-RUN chmod +x /init.sh
+COPY apache-config.sh /apache-config.sh
+RUN chmod +x /init.sh /apache-config.sh
 
 # Configure Apache
 RUN mkdir -p /run/apache2 && \
