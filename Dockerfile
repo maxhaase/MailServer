@@ -1,18 +1,20 @@
 FROM ubuntu:latest
 
+# Arguments
 ARG MYSQL_ROOT_PASSWORD
 ARG MYSQL_DATABASE
 ARG MYSQL_USER
 ARG MYSQL_PASSWORD
 
+# Environment variables
 ENV MYSQL_ROOT_PASSWORD=${MYSQL_ROOT_PASSWORD}
 ENV MYSQL_DATABASE=${MYSQL_DATABASE}
 ENV MYSQL_USER=${MYSQL_USER}
 ENV MYSQL_PASSWORD=${MYSQL_PASSWORD}
 
+# Update and install necessary packages
 RUN apt-get update && apt-get install -y \
-    apache2 \
-    libapache2-mod-php \
+    apache2 libapache2-mod-php \
     mariadb-server mariadb-client \
     postfix \
     dovecot-core dovecot-imapd dovecot-pop3d dovecot-mysql \
@@ -25,25 +27,17 @@ RUN apt-get update && apt-get install -y \
     debconf-utils \
     bash
 
-# Preseed debconf values
-RUN echo "postfix postfix/main_mailer_type select Internet Site" | debconf-set-selections
-RUN echo "postfix postfix/mailname string $(hostname -f)" | debconf-set-selections
-RUN echo "roundcube-core roundcube/dbconfig-install boolean true" | debconf-set-selections
-RUN echo "roundcube-core roundcube/mysql/admin-pass password ${MYSQL_ROOT_PASSWORD}" | debconf-set-selections
-RUN echo "roundcube-core roundcube/mysql/app-pass password ${MYSQL_PASSWORD}" | debconf-set-selections
-RUN echo "roundcube-core roundcube/app-password-confirm password ${MYSQL_PASSWORD}" | debconf-set-selections
-RUN echo "roundcube-core roundcube/mysql/admin-user string root" | debconf-set-selections
-RUN echo "roundcube-core roundcube/internal/skip-preseed boolean true" | debconf-set-selections
-RUN echo "postfixadmin postfixadmin/dbconfig-install boolean true" | debconf-set-selections
-RUN echo "postfixadmin postfixadmin/mysql/admin-pass password ${MYSQL_ROOT_PASSWORD}" | debconf-set-selections
-RUN echo "postfixadmin postfixadmin/mysql/app-pass password ${MYSQL_PASSWORD}" | debconf-set-selections
-RUN echo "postfixadmin postfixadmin/app-password-confirm password ${MYSQL_PASSWORD}" | debconf-set-selections
-RUN echo "postfixadmin postfixadmin/mysql/admin-user string root" | debconf-set-selections
-RUN echo "postfixadmin postfixadmin/internal/skip-preseed boolean true" | debconf-set-selections
-
+# Copy configuration files
 COPY apache-config/ /etc/apache2/sites-available/
+COPY postfix-config/ /etc/postfix/
+COPY dovecot-config/ /etc/dovecot/
 COPY init.sh /init.sh
 
+# Set executable permissions
 RUN chmod +x /init.sh
 
+# Expose necessary ports
+EXPOSE 80 443 25 587 993 995
+
+# Run initialization script
 CMD ["/init.sh"]
