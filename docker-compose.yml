@@ -3,14 +3,6 @@ version: '3.8'
 services:
   web:
     build: .
-    environment:
-      - MYSQL_ROOT_PASSWORD=${MYSQL_ROOT_PASSWORD}
-      - MYSQL_DATABASE=${MYSQL_DATABASE}
-      - MYSQL_USER=${MYSQL_USER}
-      - MYSQL_PASSWORD=${MYSQL_PASSWORD}
-    volumes:
-      - web_data:/var/www/html
-      - db_data:/var/lib/mysql
     ports:
       - "80:80"
       - "443:443"
@@ -18,13 +10,17 @@ services:
       - "587:587"
       - "993:993"
       - "995:995"
+    environment:
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD}
+      MYSQL_DATABASE: ${MYSQL_DATABASE}
+      MYSQL_USER: ${MYSQL_USER}
+      MYSQL_PASSWORD: ${MYSQL_PASSWORD}
+    volumes:
+      - ./apache-config:/etc/apache2/sites-available
+      - ./postfix-config:/etc/postfix
+      - ./dovecot-config:/etc/dovecot
     networks:
       - webnet
-    command: ["/bin/bash", "-c", "/usr/local/bin/init.sh && apachectl -D FOREGROUND"]
 
 networks:
   webnet:
-
-volumes:
-  web_data:
-  db_data:
