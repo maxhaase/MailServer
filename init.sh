@@ -31,6 +31,20 @@ debconf-set-selections <<< "roundcube-core roundcube/db/app-user string $MYSQL_U
 debconf-set-selections <<< "roundcube-core roundcube/app-password-confirm password $MYSQL_PASSWORD"
 debconf-set-selections <<< "roundcube-core roundcube/password-confirm password $MYSQL_PASSWORD"
 
+# Enable Apache sites and SSL
+a2ensite mail.DOMAIN1.conf
+a2ensite admin.DOMAIN1.conf
+a2ensite DOMAIN1.conf
+a2ensite DOMAIN2.conf
+a2enmod ssl
+a2enmod proxy
+a2enmod proxy_http
+a2enmod rewrite
+a2enmod headers
+
+# Obtain SSL certificates
+certbot --apache -d $MAIL_DOMAIN -d $ADMIN_DOMAIN -d $DOMAIN1 -d $DOMAIN2 -d $WEBMAIL_DOMAIN --non-interactive --agree-tos --email admin@$DOMAIN1
+
 # Restart services to apply changes
 service apache2 restart
 service postfix restart
