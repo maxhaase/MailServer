@@ -1,6 +1,5 @@
 FROM ubuntu:latest
 
-# Arguments and environment variables
 ARG MYSQL_ROOT_PASSWORD
 ARG MYSQL_DATABASE
 ARG MYSQL_USER
@@ -11,7 +10,6 @@ ENV MYSQL_DATABASE=${MYSQL_DATABASE}
 ENV MYSQL_USER=${MYSQL_USER}
 ENV MYSQL_PASSWORD=${MYSQL_PASSWORD}
 
-# Update and install necessary packages
 RUN apt-get update && apt-get install -y \
     apache2 \
     libapache2-mod-php \
@@ -24,17 +22,28 @@ RUN apt-get update && apt-get install -y \
     wordpress \
     supervisor \
     certbot python3-certbot-apache \
+    debconf-utils \
     bash
 
-# Copy configuration scripts
-COPY apache-config.sh /usr/local/bin/apache-config.sh
-COPY init.sh /usr/local/bin/init.sh
+# Preseed debconf values
+RUN echo "postfix postfix/main_mailer_type select Internet Site" | debconf-set-selections
+RUN echo "postfix postfix/mailname string $(hostname -f)" | debconf-set-selections
+RUN echo "roundcube-core roundcube/dbconfig-install boolean true" | debconf-set-selections
+RUN echo "roundcube-core roundcube/mysql/admin-pass password ${MYSQL_ROOT_PASSWORD}" | debconf-set-selections
+RUN echo "roundcube-core roundcube/mysql/app-pass password ${MYSQL_PASSWORD}" | debconf-set-selections
+RUN echo "roundcube-core roundcube/app-password-confirm password ${MYSQL_PASSWORD}" | debconf-set-selections
+RUN echo "roundcube-core roundcube/mysql/admin-user string root" | debconf-set-selections
+RUN echo "roundcube-core roundcube/internal/skip-preseed boolean true" | debconf-set-selections
+RUN echo "postfixadmin postfixadmin/dbconfig-install boolean true" | debconf-set-selections
+RUN echo "postfixadmin postfixadmin/mysql/admin-pass password ${MYSQL_ROOT_PASSWORD}" | debconf-set-selections
+RUN echo "postfixadmin postfixadmin/mysql/app-pass password ${MYSQL_PASSWORD}" | debconf-set-selections
+RUN echo "postfixadmin postfixadmin/app-password-confirm password ${MYSQL_PASSWORD}" | debconf-set-selections
+RUN echo "postfixadmin postfixadmin/mysql/admin-user string root" | debconf-set-selections
+RUN echo "postfixadmin postfixadmin/internal/skip-preseed boolean true" | debconf-set-selections
 
-# Make scripts executable
-RUN chmod +x /usr/local/bin/apache-config.sh /usr/local/bin/init.sh
+COPY apache-config/ /etc/apache2/sites-available/
+COPY init.sh /init.sh
 
-# Expose necessary ports
-EXPOSE 80 443 25 587 993 995
+RUN chmod +x /init.sh
 
-# Start supervisor to manage services
-CMD ["/usr/bin/supervisord", "-c", "/etc/supervisor/supervisord.conf"]
+CMD ["/init.sh"]
