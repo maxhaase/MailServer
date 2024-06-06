@@ -1,41 +1,41 @@
 #!/bin/bash
 
-service mariadb start
+# Start MariaDB service
+service mysql start
 
-# Secure MariaDB installation
-mysql -u root <<-EOSQL
-  UPDATE mysql.user SET Password=PASSWORD('${MYSQL_ROOT_PASSWORD}') WHERE User='root';
-  DELETE FROM mysql.user WHERE User='';
-  DELETE FROM mysql.db WHERE Db='test' OR Db='test\_%';
-  FLUSH PRIVILEGES;
-EOSQL
+# Set up the database
+mysql -u root -p$MYSQL_ROOT_PASSWORD <<EOF
+CREATE DATABASE IF NOT EXISTS $MYSQL_DATABASE;
+CREATE USER IF NOT EXISTS '$MYSQL_USER'@'%' IDENTIFIED BY '$MYSQL_PASSWORD';
+GRANT ALL PRIVILEGES ON $MYSQL_DATABASE.* TO '$MYSQL_USER'@'%';
+FLUSH PRIVILEGES;
+EOF
 
-mysql -u root -p${MYSQL_ROOT_PASSWORD} <<-EOSQL
-  CREATE DATABASE ${MYSQL_DATABASE};
-  CREATE USER '${MYSQL_USER}'@'%' IDENTIFIED BY '${MYSQL_PASSWORD}';
-  GRANT ALL PRIVILEGES ON ${MYSQL_DATABASE}.* TO '${MYSQL_USER}'@'%';
-  FLUSH PRIVILEGES;
-EOSQL
+# Configure PostfixAdmin
+debconf-set-selections <<< "postfixadmin postfixadmin/dbconfig-install boolean true"
+debconf-set-selections <<< "postfixadmin postfixadmin/mysql/admin-pass password $MYSQL_ROOT_PASSWORD"
+debconf-set-selections <<< "postfixadmin postfixadmin/mysql/app-pass password $MYSQL_PASSWORD"
+debconf-set-selections <<< "postfixadmin postfixadmin/mysql/admin-user string root"
+debconf-set-selections <<< "postfixadmin postfixadmin/db/dbname string $MYSQL_DATABASE"
+debconf-set-selections <<< "postfixadmin postfixadmin/db/app-user string $MYSQL_USER"
+debconf-set-selections <<< "postfixadmin postfixadmin/app-password-confirm password $MYSQL_PASSWORD"
+debconf-set-selections <<< "postfixadmin postfixadmin/password-confirm password $MYSQL_PASSWORD"
 
-# Enable Apache sites and modules
-a2enmod proxy proxy_http ssl
-a2ensite mail.DOMAIN1.conf
-a2ensite admin.DOMAIN1.conf
-a2ensite DOMAIN1.conf
-a2ensite DOMAIN2.conf
-a2ensite webmail.DOMAIN1.conf
+# Configure Roundcube
+debconf-set-selections <<< "roundcube-core roundcube/dbconfig-install boolean true"
+debconf-set-selections <<< "roundcube-core roundcube/mysql/admin-pass password $MYSQL_ROOT_PASSWORD"
+debconf-set-selections <<< "roundcube-core roundcube/mysql/app-pass password $MYSQL_PASSWORD"
+debconf-set-selections <<< "roundcube-core roundcube/mysql/admin-user string root"
+debconf-set-selections <<< "roundcube-core roundcube/db/dbname string $MYSQL_DATABASE"
+debconf-set-selections <<< "roundcube-core roundcube/db/app-user string $MYSQL_USER"
+debconf-set-selections <<< "roundcube-core roundcube/app-password-confirm password $MYSQL_PASSWORD"
+debconf-set-selections <<< "roundcube-core roundcube/password-confirm password $MYSQL_PASSWORD"
 
+# Restart services to apply changes
 service apache2 restart
+service postfix restart
+service dovecot restart
+service mysql restart
 
-# Configure postfixadmin and roundcube
-dpkg-reconfigure postfixadmin
-dpkg-reconfigure roundcube-core
-
-service postfix start
-service dovecot start
-
-# Setup Certbot
-certbot --apache --agree-tos --non-interactive --email admin@lung.se -d mail.DOMAIN1 -d admin.DOMAIN1 -d DOMAIN1 -d DOMAIN2 -d webmail.DOMAIN1
-
-# Supervisor
-/usr/bin/supervisord -n
+# Keep the container running
+tail -f /dev/null
