@@ -1,6 +1,8 @@
 
 # Comprehensive Guide to Setting Up Mail Server and Web Services with Docker, Apache, and SSL on Ubuntu 24
 
+## You should consider the Kubernetes method, is a bit less easy, but better. The code is free, look in my repos! 
+
 ## Step 1: Prepare the Environment
 
 ### Update and Install Prerequisites:
